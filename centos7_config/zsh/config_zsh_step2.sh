@@ -4,6 +4,6 @@ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-m
 git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-history-substring-search
 
 rm -f /root/.zshrc
-cp /root/on_my_zsh/.zshrc /root/.zshrc
+cp /root/on_my_zsh/zshrc /root/.zshrc
 cd /root
 source /root/.zshrc

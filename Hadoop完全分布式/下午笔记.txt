@@ -1,0 +1,44 @@
+一、使用ssh执行命令
+
+①ssh 目标机器 
+		登录之后，执行某个命令！
+		属于Login-shell，会自动读取 /etc/profile文件中定义的所有的变量！
+		
+②ssh 目标机器  命令
+		属于non-login-shell
+		不会读取/etc/profile
+		
+		如果在使用命令时，我们需要使用/etc/profile定义的一些变量，需要在
+		目标机器的对应的用户的家目录/.bashrc中添加以下代码
+		
+		source /etc/profile
+		
+		如果不添加以上代码，在执行start-all.sh | stop-all.sh一定会报错！
+		
+二、启动Hadoop
+HDFS
+	①需要在NN所配置的节点进行格式化
+	②在不同的节点启动不同的进程
+	
+三、运行群起脚本
+①群起脚本的原理是获取集群中所有的节点的主机名
+		默认读取当前机器 HADOOP_HOME/etc/hadoop/slaves，获取集群中所有的节点的主机名
+		
+②循环执行 ssh 主机名 hadoop-daemon.sh start xxx
+		保证当前机器到其他节点，已经配置了ssh免密登录
+		保证集群中所有当前用户的家目录/.bashrc中，已经配置source /etc/profile
+		
+注意：  start-all.sh时，其实分别调用了start-dfs.sh和start-yarn.sh
+			start-dfs.sh可以在集群的任意一台机器使用！可以启动HDFS中的所有进程！
+			start-yarn.sh在集群的非RM所在的机器使用，不会启动resourcemanager!
+			
+		建议： 只需要配置RM所在机器到其他机器的SSH免密登录！
+				都在RM所在的机器执行群起和群停脚本！
+				xsync和xcall只放在RM所在的机器即可！
+	
+
+
+
+
+
+

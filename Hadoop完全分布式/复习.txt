@@ -1,0 +1,170 @@
+一、大数据
+1.含义
+		大数据指在一定时间范围内使用常规的软件无法处理的数据集合！
+		
+2.特点
+		①海量
+		②高增长率
+		③多样性
+		④低价值密度
+		
+二、Hadoop
+1.含义
+		狭义： Hadoop只代表hadoop框架本身！
+		广义： hadoop代表整个hadoop体系，由hadoop框架和其他依赖于hadoop的其他框架共同组成！
+		
+2.hadoop的组成
+2.x版本
+
+HDFS: 负责大数据存储的一个分布式文件系统！
+YARN: 负责为大数据计算程序提供资源申请，管理和调度的框架！
+
+MapReduce: 编程框架
+Common:  常用的工具包
+
+2.x版本和1.x版本的区别：
+	在1.x版本，MR既负责运行MR程序还负责为MR程序申请资源！Hadoop集群只能为自身的MR程序提供服务！
+	在2.x版本，MR只负责MR程序的计算，资源的调度和管理由YARN负责！Hadoop集群，不仅能为自身的MR程序提供服务！
+		还可以为第三方计算引擎，例如TeZ,Spark,Flink等提供计算资源的调度服务！
+		
+三、HDFS中的核心进程
+
+1.核心进程
+		Namenode(1个):  负责HDFS上所有文件元数据的管理！
+							元数据： 文件的属性(文件名，大小，创建时间，所属主，由哪些块组成)
+							
+						职责： ①负责接受客户端的所有请求
+								②负责接受DN上报的块信息
+								③负责向DN分配任务，例如维护文件的副本数等
+							
+		Datanode（N个）:  负责HDFS上所有文件数据的存储！
+		
+		SecondaryNamenode(N个):  负责协助Namenode工作！
+		
+四、YARN中的核心进程
+
+1.核心进程
+		ResourceManager(1个)： 负责整个集群所有资源的管理和调度！
+						职责：   ①负责接受客户端的所有请求
+								②负责接受NM上报的块信息
+								③负责向NM分配任务，例如检查NM是否健康，是否在线等
+		
+		NodeManager(N个)： 负责当前机器所有资源的管理和调度！
+		
+五、MapReduce中的核心进程
+
+1.MapReduce是一个编程模型！这个模型由两个阶段组成，一个称为Map阶段，另一个称为Reduce阶段！
+		在Map阶段和Reduce阶段分别启动若干进程负责运算！这些进程称为Task!
+		
+		在Map阶段启动的Task称为MapTask!
+		在Reduce阶段启动的Task称为ReduceTask!
+		
+		将一个MapReduce程序称为一个Job!
+		
+		一个Job中会启动若干个Task!
+		
+		在Job启动时，Job会先创建一个MRAppMaster进程，由这个进程和RM进行通信，为Job中的每个Task申请
+		计算所需要的资源！
+		
+		Task的请求，会被RM缓存到一个调度队列中，由NM领取Task，领取后NM会根据Task要求，提供计算资源！
+		提供后，为了避免计算资源在当前Task使用时被其他的task抢占，NM会将资源封装到一个Container中！
+		
+		Container可以对计算资源进行隔离！
+		
+六、安装
+1.环境要求
+	必须保证已经安装了JDK，有JAVA_HOME环境变量！
+	
+2.安装
+	解压在linux下编译的Hadoop！
+	
+3. 建议将HADOOP_HOME提升为全局变量！
+		后续的HADOOP体系中的所有的框架，都通过HADOOP_HOME找到hadoop的安装目录！
+		将bin,sbin目录配置到PATH中！
+		
+4.目录结构
+		bin:  常用的工具hadoop所在的目录
+		sbin:  提供对集群的管理功能，例如启动和停止进程！
+		etc:  默认的配置文件目录
+		
+七、使用
+1. 配置文件
+		hadoop有4个默认我配置文件，这4个文件会随着Hadoop启动时，自动加载！
+		
+		如果希望对这4个文件加载的默认属性进行覆盖！用户需要自定义配置文件！
+		
+		文件格式： 
+				core-site.xml----->core-default.xml
+				hdfs-site.xml----->hdfs-default.xml
+				yarn-site.xml----->yarn-default.xml
+				mapred-site.xml----->mapred-default.xml
+				
+		配置文件的位置：
+				自定义位置：  hadoop --confdir 配置文件的目录
+				默认配置文件目录：  $HADOOP_HOME/etc/hadoop
+				
+2.HDFS的运行模式
+		
+		①本地模式：  使用当前计算机的文件系统作为HDFS的文件系统！
+					  fs.defaultFS=file:///(默认)
+					  
+		②分布式文件系统：  通过运行NN,DN等进程，由这些进程组成一个分布式的系统，进行文件的读写！
+					fs.defaultFS=hdfs://NN所在的主机名:9000
+					
+			
+3.启动一个分布式文件系统
+①在$HADOOP_HOME/etc/hadoop，配置core-site.xml
+		fs.defaultFS=hdfs://NN所在的主机名:9000
+②配置Hadoop默认的工作目录，在$HADOOP_HOME/etc/hadoop，配置core-site.xml
+		hadoop.tmp.dir=配置一个当前用户有写权限的非tmp目录
+③格式化NN
+		hadoop namenode -format
+		目的： ①生成NN的工作目录
+               ②在工作目录下生成NN所要使用的特殊的文件，例如VERSION，fsiamge000000
+	注意： 一个集群搭建完成后，只需要格式化一次！
+	
+④启动
+		hadoop-daemon.sh start namenode|datanode
+
+⑤查看
+		jps
+		http://NN所运行的主机名:50070
+		
+4.MR的运行模式
+		本地模式：  在本机使用多线程的方式模拟多个Task的运行！
+						mapreduce.framework.name=local(默认)
+		分布式模式：  在YARN上运行！
+						mapreduce.framework.name=yarn(默认)
+						
+5.配置MR在yarn上运行
+①在$HADOOP_HOME/etc/hadoop，配置mapred-site.xml
+		mapreduce.framework.name=yarn
+②配置YARN
+		在$HADOOP_HOME/etc/hadoop，配置yarn-site.xml
+		配置yarn.resourcemanager.hostname=RM运行的主机名
+			yarn.xxxx-auxservice=mapreduce_shuffle
+③启动YARN
+		yarn-daemon.sh start resourcemanager | nodemanager
+		
+④查看
+		jps
+		http://rm所运行的主机名:8088
+		
+⑤提交作业
+		hadoop  jar  xxx.jar 主类名  输入目录..  输出目录
+		
+		要去： 输出目录必须不存在
+				输入目录中必须全部是文件
+			
+		
+			   
+		
+		
+		
+
+
+
+
+
+
+
