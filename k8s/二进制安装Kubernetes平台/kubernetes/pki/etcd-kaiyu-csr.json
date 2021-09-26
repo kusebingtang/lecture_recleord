@@ -1,0 +1,25 @@
+{
+    "CN": "etcd-kaiyu",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "hosts": [  
+        "127.0.0.1",
+        "k8s-master1",
+        "k8s-master2",
+        "k8s-master3",
+        "192.168.0.42",
+        "192.168.0.43",
+        "192.168.0.44"
+    ],
+    "names": [
+        {
+            "C": "CN",
+            "L": "beijing",
+            "O": "etcd",
+            "ST": "beijing",
+            "OU": "System"
+        }
+    ]
+}

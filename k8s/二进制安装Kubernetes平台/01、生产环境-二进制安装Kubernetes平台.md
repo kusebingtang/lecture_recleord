@@ -267,7 +267,7 @@ $ ls
 ca-config.json  ca.csr  ca-csr.json  ca-key.pem  ca.pem
 ```
 
-
+![image-20210926200342432](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926200342432.png)
 
 ### 3、cfssl使用
 
@@ -385,7 +385,7 @@ vi ca-config.json
 
 **csr.json**
 
-- 我们自己准备一个证书申请请求书。证书机构就会根据我们请求签发证书
+- 我们自己准备一个**证书申请请求书**。证书机构就会根据我们请求签发证书
 
 ```json
 cfssl print-defaults
@@ -549,7 +549,7 @@ openssl x509 -in kubernetes.pem -text -noout
 
 
 
-
+> ![image-20210926200728057](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926200728057.png)
 
 ### 1、环境准备与内核升级
 
@@ -642,7 +642,7 @@ modprobe -- ip_vs
 modprobe -- ip_vs_rr
 modprobe -- ip_vs_wrr
 modprobe -- ip_vs_sh
-modprobe -- nf_conntrack
+modprobe -- nf_conntrack  #在内核4.19+版本改为nf_conntrack
 
 #修改ipvs配置，加入以下内容
 vi /etc/modules-load.d/ipvs.conf
