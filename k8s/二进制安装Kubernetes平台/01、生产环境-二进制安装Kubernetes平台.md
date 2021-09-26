@@ -1,6 +1,32 @@
 <center> 
     <h1>自建k8s平台-高可用k8s集群
     </h1></center>
+```shell
+ vim bin/xsync
+ chmod +x bin/xsync
+
+#!/bin/bash
+#校验参数是否合法
+if(($#==0))
+then
+     echo 请输入要分发的文件!
+     exit;
+fi
+#获取分发文件的绝对路径
+dirpath=$(cd `dirname $1`; pwd -P)
+filename=`basename $1`
+
+echo 要分发的文件的路径是:$dirpath/$filename
+
+#循环执行rsync分发文件到集群的每条机器
+for NODE in k8s-master2 k8s-master3 cdh1 cdh5 cdh6 cdh7;
+do
+     echo ---------------------$NODE---------------------
+     rsync -rvlt $dirpath/$filename  root@$NODE:$dirpath
+done
+```
+
+
 
 # 一、前置概念与操作
 
@@ -1875,7 +1901,7 @@ systemctl status kube-apiserver
 
 所有Master节点配置kube-controller-manager.service
 
-> 文档使用的k8s Pod网段为`196.16.0.0/16`，该网段不能和宿主机的网段、k8s Service网段的重复，请按需修改;
+> 文档使用的k8s **Pod网段**为`196.16.0.0/16`，该网段不能和宿主机的网段、k8s Service网段的重复，请按需修改;
 >
 > 特别注意：docker的网桥默认为 `172.17.0.1/16`。不要使用这个网段
 
@@ -2057,7 +2083,9 @@ No resources found
 #说明已经可以连接apiserver并获取资源
 ```
 
-
+>![image-20210926125342012](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926125342012.png)
+>
+>
 
 ### 3、创建集群引导权限文件
 
@@ -2195,6 +2223,22 @@ for NODE in k8s-master2 k8s-master3 k8s-node1 k8s-node2; do
 
 ### 2、所有节点配置kubelet
 
+> Node 节点copy kubelet kube-proxy
+
+```sh
+for NODE in k8s-master2 k8s-master3 k8s-node3 k8s-node1 k8s-node2; do
+     scp -r /usr/local/bin/kubelet root@$NODE:/usr/local/bin/
+     scp -r /usr/local/bin/kube-proxy root@$NODE:/usr/local/bin/
+ done
+ 
+for NODE in  k8s-master2 k8s-master3 cdh1 cdh5 cdh6 cdh7;
+do
+     scp -r /etc/kubernetes/* root@$NODE:/etc/kubernetes/
+done
+```
+
+
+
 ```sh
 # 所有节点创建相关目录
 mkdir -p /var/lib/kubelet /var/log/kubernetes /etc/systemd/system/kubelet.service.d /etc/kubernetes/manifests/
@@ -2202,7 +2246,7 @@ mkdir -p /var/lib/kubelet /var/log/kubernetes /etc/systemd/system/kubelet.servic
 ## 所有node节点必须有 kubelet kube-proxy
 for NODE in k8s-master2 k8s-master3 k8s-node3 k8s-node1 k8s-node2; do
      scp -r /etc/kubernetes/* root@$NODE:/etc/kubernetes/
- done
+done
 ```
 
 
@@ -2231,7 +2275,7 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-
+- kubelet **service配置文件**
 
 ```sh
 # 所有节点配置kubelet service配置文件
@@ -2345,8 +2389,59 @@ systemctl status kubelet
 > 会提示 "Unable to update cni config"。
 >
 > 接下来配置cni网络即可
+>
+> ![image-20210926152241787](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926152241787.png)
 
 
+
+- 错误排查
+
+![image-20210926153826295](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926153826295.png)
+
+> 2.排查过程
+> 首先查看下kubelet的日志，日志记录的东西都是最详细的
+>
+> ```shell
+> journalctl -xeu kubelet | less
+> ```
+>
+> > [初始化报错failed to run Kubelet: misconfiguration: kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"]l)
+>
+> ### 分别修改docker与控制平台的kubelet为systemd 【官方推荐】
+>
+> 鉴于用的k8s版本有点新，本文只记录当前1.18.x的修改方式，其他版本请参详[官方](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#configure-cgroup-driver-used-by-kubelet-on-control-plane-node):
+>
+> 重置未初始化成功的kubeadm配置
+>
+> ```bash
+> echo y|kubead reset
+> ```
+>
+> 修改docker，只需在`/etc/docker/daemon.json`中，添加`"exec-opts": ["native.cgroupdriver=systemd"]`即可，本文最初的docker配置可供参考。
+>
+> 修改kubelet：
+>
+> ```bash
+> cat > /var/lib/kubelet/config.yaml <<EOF
+> apiVersion: kubelet.config.k8s.io/v1beta1
+> kind: KubeletConfiguration
+> cgroupDriver: systemd
+> EOF
+> ```
+>
+> 重启docker 与 kubelet:
+>
+> ```bash
+> systemctl daemon-reload
+> systemctl restart docker
+> systemctl restart kubelet
+> ```
+>
+> 检查 `docker info|grep "Cgroup Driver"` 是否输出 `Cgroup Driver: systemd`
+>
+> ![image-20210926154659658](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926154659658.png)
+>
+> 
 
 
 
@@ -2492,7 +2587,7 @@ systemctl daemon-reload && systemctl enable --now kube-proxy
 systemctl status kube-proxy
 ```
 
-
+>![image-20210926161808106](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926161808106.png)
 
 
 
@@ -2540,7 +2635,7 @@ grep "CALICO_IPV4POOL_CIDR" calico.yaml -A 1
 kubectl apply -f calico.yaml
 ```
 
-
+> ![image-20210926180936558](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926180936558.png)
 
 ## 11、部署coreDNS
 
@@ -2556,6 +2651,16 @@ cd deployment/kubernetes
 
 ## 13、给机器打上role标签
 
+**k8s-master1 打上污点，不调度**
+
+```shell
+kubectl taint nodes k8s-master1 node-role.kubernetes.io/master=:NoSchedule
+kubectl taint nodes k8s-master2 node-role.kubernetes.io/master=:NoSchedule
+kubectl taint nodes k8s-master3 node-role.kubernetes.io/master=:NoSchedule
+```
+
+> ![image-20210926190924604](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926190924604.png)
+
 ```sh
 kubectl label node k8s-master1 node-role.kubernetes.io/master=''
 kubectl label node k8s-master2 node-role.kubernetes.io/master=''
@@ -2564,7 +2669,20 @@ kubectl label node k8s-master3 node-role.kubernetes.io/master=''
 kubectl taints node k8s-master1 
 ```
 
-
+>```sh
+>kubectl label node cdh1 node-role.kubernetes.io/worker=''
+>kubectl label node cdh5 node-role.kubernetes.io/worker=''
+>kubectl label node cdh6 node-role.kubernetes.io/worker=''
+>kubectl label node cdh7 node-role.kubernetes.io/worker=''
+>
+>kubectl label node k8s-master1 node-role.kubernetes.io/master=''
+>kubectl label node k8s-master2 node-role.kubernetes.io/master=''
+>kubectl label node k8s-master3 node-role.kubernetes.io/master=''
+>```
+>
+>
+>
+>![image-20210926191307280](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210926191307280.png)
 
 ## 14、集群验证
 
