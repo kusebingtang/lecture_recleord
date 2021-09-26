@@ -31,7 +31,7 @@ kernel-ml： mainline stable： 主线稳定版
 yum --enablerepo=elrepo-kernel install -y kernel-lt
 
 # 5、查看内核
-uname -sr
+                                                                      uname -sr
 #查看内核位置
 awk -F\' '$1=="menuentry " {print $2}' /etc/grub2.cfg
 CentOS Linux 7 Rescue 0a87210b6f6337e79a6611c512e524ce (5.4.119-1.el7.elrepo.x86_64) #第0个
@@ -54,6 +54,29 @@ reboot
 # 9、检查
 uname -r
 ```
+
+> ![image-20210924105734348](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924105734348.png)
+>
+> #### 7、修改使用默认内核
+>
+> ![image-20210924105838023](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924105838023.png)
+
+**升级系统内核**
+
+```shell
+rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm 
+
+yum --enablerepo=elrepo-kernel install -y kernel-lt 
+
+grep initrd16 /boot/grub2/grub.cfg 
+
+grub2-set-default 0 
+
+reboot
+
+```
+
+
 
 在内核4.19+版本nf_conntrack_ipv4已经改为nf_conntrack， 4.18以下使用nf_conntrack_ipv4即可：
 
@@ -1272,7 +1295,7 @@ etcdctl --endpoints=$ENDPOINTS --cacert=/etc/kubernetes/pki/etcd/ca.pem --cert=/
 
 https://github.com/kubernetes/kubernetes  找到changelog对应版本
 
-![1621403784124](../05%E3%80%81others/assets/1621403784124.png)
+![image-20210924152118494](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924152118494.png)
 
 
 
@@ -1301,6 +1324,21 @@ tar -xvf kubernetes-server-linux-amd64.tar.gz  --strip-components=3 -C /usr/loca
 
 
 ### 3、apiserver 证书生成
+
+>/etc/kubernetes/pki
+>
+>![image-20210924153814458](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924153814458.png)
+
+**生成ca证书和私钥**
+
+```sh
+cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
+# ca.csr ca.pem(ca公钥) ca-key.pem(ca私钥,妥善保管)
+```
+
+> ![image-20210924155059017](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924155059017.png)
+
+
 
 #### 1、apiserver-csr.json 
 
@@ -1378,7 +1416,9 @@ cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
 cfssl gencert   -ca=/etc/kubernetes/pki/ca.pem   -ca-key=/etc/kubernetes/pki/ca-key.pem   -config=/etc/kubernetes/pki/ca-config.json   -profile=kubernetes   apiserver-csr.json | cfssljson -bare /etc/kubernetes/pki/apiserver
 ```
 
-
+>![image-20210924162736130](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924162736130.png)
+>
+>
 
 ### 4、front-proxy证书生成
 
@@ -1414,7 +1454,9 @@ vi front-proxy-ca-csr.json
 cfssl gencert   -initca front-proxy-ca-csr.json | cfssljson -bare /etc/kubernetes/pki/front-proxy-ca
 ```
 
-
+>![image-20210924163241749](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924163241749.png)
+>
+>
 
 
 
@@ -1441,7 +1483,9 @@ cfssl gencert   -ca=/etc/kubernetes/pki/front-proxy-ca.pem   -ca-key=/etc/kubern
 #忽略警告，毕竟我们不是给网站生成的
 ```
 
-
+> ![image-20210924165601234](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924165601234.png)
+>
+> ![image-20210924165629202](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924165629202.png)
 
 ### 5、controller-manage证书生成与配置
 
@@ -1479,7 +1523,7 @@ cfssl gencert \
   controller-manager-csr.json | cfssljson -bare /etc/kubernetes/pki/controller-manager
 ```
 
-
+>![image-20210924165819107](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924165819107.png)
 
 #### 3、生成配置
 
@@ -1554,6 +1598,10 @@ cfssl gencert \
    scheduler-csr.json | cfssljson -bare /etc/kubernetes/pki/scheduler
 ```
 
+>![image-20210924170430373](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924170430373.png)
+>
+>
+
 #### 3、生成配置
 
 ```sh
@@ -1584,7 +1632,7 @@ kubectl config use-context system:kube-scheduler@kubernetes \
 #k8s集群安全操作相关
 ```
 
-
+>![image-20210924170612526](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924170612526.png)
 
 ### 7、admin证书生成与配置
 
@@ -1621,7 +1669,9 @@ cfssl gencert \
    admin-csr.json | cfssljson -bare /etc/kubernetes/pki/admin
 ```
 
-
+>![image-20210924171336672](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924171336672.png)
+>
+>
 
 #### 3、生成配置
 
@@ -1650,7 +1700,9 @@ kubectl config use-context kubernetes-admin@kubernetes \
 --kubeconfig=/etc/kubernetes/admin.conf
 ```
 
-
+>![image-20210924171441053](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924171441053.png)
+>
+>
 
 > kubelet将使用 bootstrap 引导机制，自动颁发证书，所以我们不用配置了。要不然，1万台机器，一个万kubelet，证书配置到明年去。。。
 
@@ -1664,7 +1716,7 @@ openssl genrsa -out /etc/kubernetes/pki/sa.key 2048
 openssl rsa -in /etc/kubernetes/pki/sa.key -pubout -out /etc/kubernetes/pki/sa.pub
 ```
 
-
+>![image-20210924171713986](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924171713986.png)
 
 ### 9、发送证书到其他节点
 
@@ -1719,7 +1771,7 @@ done
 mkdir -p /etc/kubernetes/manifests/ /etc/systemd/system/kubelet.service.d /var/lib/kubelet /var/log/kubernetes
 
 
-#三个master节点kube-xx相关的程序都在 /usr/local/bin
+
 for NODE in k8s-master2 k8s-master3
 do
 	scp -r /etc/kubernetes/* root@$NODE:/etc/kubernetes/
@@ -1813,7 +1865,9 @@ systemctl daemon-reload && systemctl enable --now kube-apiserver
 systemctl status kube-apiserver
 ```
 
-
+>![image-20210924185315068](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924185315068.png)
+>
+>
 
 ### 3、配置controller-manager服务
 
@@ -1868,7 +1922,7 @@ WantedBy=multi-user.target
 
 
 
-#### 2、启动
+#### 2、启动(**master节点**)
 
 ```sh
 # 所有master节点执行
@@ -1879,7 +1933,9 @@ systemctl daemon-reload && systemctl enable --now kube-controller-manager
 systemctl status kube-controller-manager
 ```
 
-
+>![image-20210924185851622](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924185851622.png)
+>
+>
 
 
 
@@ -1887,7 +1943,7 @@ systemctl status kube-controller-manager
 
 #### 1、配置
 
-所有Master节点配置kube-scheduler.service
+所有**Master节点**配置kube-scheduler.service
 
 ```sh
 vi /usr/lib/systemd/system/kube-scheduler.service 
@@ -1916,7 +1972,7 @@ WantedBy=multi-user.target
 
 
 
-#### 2、启动
+#### 2、启动(**master节点**)
 
 ```sh
 systemctl daemon-reload
@@ -1926,7 +1982,9 @@ systemctl daemon-reload && systemctl enable --now kube-scheduler
 systemctl status kube-scheduler
 ```
 
-
+>![image-20210924190221236](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210924190221236.png)
+>
+>
 
 
 
