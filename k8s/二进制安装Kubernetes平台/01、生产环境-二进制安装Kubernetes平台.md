@@ -2809,7 +2809,7 @@ kubectl taint nodes k8s-master1 node-role.kubernetes.io/master=:NoSchedule
 // log-opts: 日志设置，单文件最大，最大几个文件
 // 容器的日志都在 /var/lib/docker/containers/容器名/xxx.log
 // "live-restore"： 停机保活
-vi /etc/docker/daemon.json  
+vim /etc/docker/daemon.json  
 
 {
  "registry-mirrors": [
@@ -2826,6 +2826,10 @@ vi /etc/docker/daemon.json
 }
 ```
 
+```shell
+systemctl daemon-reload && systemctl restart docker
+```
+
 
 
 ## 2、优化kubelet
@@ -2833,7 +2837,7 @@ vi /etc/docker/daemon.json
 更多参照： https://kubernetes.io/zh/docs/reference/config-api/kubelet-config.v1beta1/
 
 ```yaml
-vi /etc/kubernetes/kubelet-conf.yml
+vim /etc/kubernetes/kubelet-conf.yml
 
 # kubeReserved： kubelet预留资源
 kubeReserved:
@@ -2852,7 +2856,7 @@ systemReserved:
 
 `curl 127.0.0.1:10249/proxyMode`
 
-
+> ![image-20210927110842602](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210927110842602.png)
 
 ## 3、恶心的时区问题
 
@@ -2900,5 +2904,5 @@ systemctl daemon-reload && systemctl restart kube-apiserver
 
 > 所以以后，使用Pod标准模板。挂载时区
 
-
+![image-20210927111046397](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20210927111046397.png)
 
