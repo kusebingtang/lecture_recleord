@@ -1,0 +1,40 @@
+harbor.topjoytec.com
+
+echo "192.168.0.45 harbor.topjoytec.com" >> /etc/hosts
+
+openssl req -x509 -new -nodes -sha512 -days 3650 -subj "/C=TW/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=harbor.topjoytec.com" -key ca.key -out ca.crt
+
+
+openssl genrsa -out harbor.topjoytec.com.key 4096
+
+openssl req -sha512 -new -subj "/C=TW/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=harbor.topjoytec.com" -key harbor.topjoytec.com.key -out harbor.topjoytec.com.csr
+
+
+cat > v3.ext <<-EOF 
+authorityKeyIdentifier=keyid,issuer 
+basicConstraints=CA:FALSE 
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment 
+extendedKeyUsage = serverAuth 
+subjectAltName = @alt_names 
+[alt_names] 
+DNS.1=harbor.topjoytec.com 
+EOF
+
+openssl x509 -req -sha512 -days 3650 -extfile v3.ext -CA ca.crt -CAkey ca.key -CAcreateserial -in harbor.topjoytec.com.csr -out harbor.topjoytec.com.crt
+
+openssl x509 -inform PEM -in harbor.topjoytec.com.crt -out harbor.topjoytec.com.cert
+
+mkdir -p /etc/docker/certs.d/harbor.topjoytec.com/ 
+cp harbor.topjoytec.com.cert /etc/docker/certs.d/harbor.topjoytec.com/ 
+cp harbor.topjoytec.com.key /etc/docker/certs.d/harbor.topjoytec.com/ 
+cp ca.crt /etc/docker/certs.d/harbor.topjoytec.com/
+
+/opt/harbor/harbor/ssl/harbor.topjoytec.com.crt
+/opt/harbor/harbor/ssl/harbor.topjoytec.com.key
+
+
+
+
+docker pull busybox
+docker tag busybox harbor.topjoytec.com/library/busybox:v1.0
+docker push  harbor.topjoytec.com/library/busybox:v1.0
