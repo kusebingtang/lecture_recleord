@@ -10,8 +10,8 @@
 
  Development和Operations的组合词；
 
- ![img](../../other/%E4%BA%91%E5%8E%9F%E7%94%9F/%E4%BA%91%E5%8E%9F%E7%94%9F/02%E3%80%81CICD&Jenkins.assets/0b55b319ebc4b745dfdcdd5acdfc1e178a821535.png)
- ![image-20200508123805029](../../other/%E4%BA%91%E5%8E%9F%E7%94%9F/%E4%BA%91%E5%8E%9F%E7%94%9F/02%E3%80%81CICD&Jenkins.assets/image-20200508123805029.png)
+![image-20210929111628106](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/03、CICD/DevOps.assets/image-20210929111628106.png)
+![image-20210929111648117](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/03、CICD/DevOps.assets/image-20210929111648117.png)
 
 
 
@@ -27,7 +27,9 @@ DevOps: Development 和 Operations 的组合
 
 **持续**集成    **持续**部署
 
-### 1、基本理念 ![image-20200508123612832](../../other/%E4%BA%91%E5%8E%9F%E7%94%9F/%E4%BA%91%E5%8E%9F%E7%94%9F/02%E3%80%81CICD&Jenkins.assets/image-20200508123612832.png)
+### 1、基本理念 
+
+![image-20210929111735708](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/03、CICD/DevOps.assets/image-20210929111735708.png)
 
 
 
