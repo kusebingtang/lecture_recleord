@@ -1067,6 +1067,50 @@ cfssl gencert \
 >
 > for i in k8s-master2 k8s-master3;do scp -r /etc/kubernetes/pki/etcd root@$i:/etc/kubernetes/pki;done
 
+生成etcd的client证书
+
+```
+cat etcd-healthcheck-client.json
+{
+  "CN": "etcd",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "HangZhou",
+      "L": "XS",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
+```
+
+```sh
+cfssl gencert \
+   -ca=/etc/kubernetes/pki/etcd/ca.pem \
+   -ca-key=/etc/kubernetes/pki/etcd/ca-key.pem \
+   -config=/etc/kubernetes/pki/ca-config.json \
+   -profile=etcd \
+   etcd-healthcheck-client.json | cfssljson -bare /etc/kubernetes/pki/etcd/healthcheck-client
+   
+注：因为是client端证书，不需要指定hosts，因为需要在任意节点使用此证书
+注：因为kube-apiserver也是作为etcd的客户端访问etcd的，所以kube-apiserver也可以使用此证书；
+注：kube-apiserver使用上面的证书时，hosts为空，也可以指定hosts单独为apiserver生成证书
+
+
+etcdctl --endpoints=https://192.168.0.42:2379 --cacert=/etc/kubernetes/pki/etcd/ca.pem --cert=/etc/kubernetes/pki/etcd/healthcheck-client.pem --key=/etc/kubernetes/pki/etcd/healthcheck-client-key.pem member list --write-out=table
+```
+
+
+
+
+
+
+
 
 
 
