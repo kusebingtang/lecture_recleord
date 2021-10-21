@@ -126,7 +126,7 @@ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kube
 注：因为是对等证书，需要指定hosts（即只能在指定的IP上使用）；hosts指定的IP均为etcd各节点的IP
 ```
 
-> ![image-20211008114025145](/Users/binjiang/Desktop/k8s各证书生成.assets/image-20211008114025145.png)
+> ![image-20211008114025145](k8s各证书生成.assets/image-20211008114025145.png)
 
 # 生成etcd的server证书
 
@@ -159,7 +159,7 @@ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kube
 注：各节点均要生成此证书，如果羡麻烦，可以直接使用peer的证书
 ```
 
-> ![image-20211008114041844](/Users/binjiang/Desktop/k8s各证书生成.assets/image-20211008114041844.png)
+> ![image-20211008114041844](k8s各证书生成.assets/image-20211008114041844.png)
 
 # 生成etcd的client证书
 

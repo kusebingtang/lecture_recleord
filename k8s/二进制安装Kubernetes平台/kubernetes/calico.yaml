@@ -375,6 +375,8 @@ spec:
               value: "false"
             - name: FELIX_HEALTHENABLED
               value: "true"
+            - name: IP_AUTODETECTION_METHOD
+              value: interface=enp*
           securityContext:
             privileged: true
           resources:

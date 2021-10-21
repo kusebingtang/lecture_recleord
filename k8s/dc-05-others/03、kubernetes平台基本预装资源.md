@@ -224,8 +224,10 @@ kubernetes官方使用nginx做的组件
 >   kubectl label node k8s-node1 node-role=ingress
 >   kubectl label node k8s-node2 node-role=ingress
 >   kubectl label node k8s-node3 node-role=ingress
+>   
+>   kubectl get node --show-labels
 >   ```
->
+>   
 > - 
 >
 > - 部署ingress的node节点会自动 开启 节点的 `80和443` 端口，保证这个机器端口不会被占用

@@ -1,0 +1,21 @@
+vim /etc/docker/daemon.json
+
+
+"insecure-registries": ["harbor.topjoytec.com"],
+
+http://harbor.topjoytec.com/
+
+
+systemctl daemon-reload && systemctl restart docker
+
+
+
+systemctl stop kubelet
+systemctl stop kube-proxy
+
+
+systemctl start kubelet
+systemctl  start kube-proxy
+
+
+docker push registry.cn-hangzhou.aliyuncs.com/lightup/light-sms-service:SNAPSHOT-4

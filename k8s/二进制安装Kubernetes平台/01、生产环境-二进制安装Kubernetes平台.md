@@ -24,6 +24,9 @@ do
      echo ---------------------$NODE---------------------
      rsync -rvlt $dirpath/$filename  root@$NODE:$dirpath
 done
+
+systemctl stop firewalld.service
+systemctl disable firewalld.service
 ```
 
 
@@ -453,7 +456,9 @@ cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
 # ca.csr ca.pem(ca公钥) ca-key.pem(ca私钥,妥善保管)
 ```
 
-
+>![image-20211019174520911](/Users/binjiang/Documents/git_repository/lecture_recleord/k8s/二进制安装Kubernetes平台/01、生产环境-二进制安装Kubernetes平台.assets/image-20211019174520911.png)
+>
+>
 
 **创建etcd证书签名(etcd-csr.json)**
 
@@ -555,6 +560,8 @@ openssl x509 -in kubernetes.pem -text -noout
 
 ```sh
 ## 先升级所有机器内核
+systemctl stop firewalld.service
+systemctl disable firewalld.service
 ```
 
 
@@ -642,7 +649,7 @@ modprobe -- ip_vs
 modprobe -- ip_vs_rr
 modprobe -- ip_vs_wrr
 modprobe -- ip_vs_sh
-modprobe -- nf_conntrack  #在内核4.19+版本改为nf_conntrack
+modprobe -- nf_conntrack  #在内核4.19+版本改为 modprobe -- nf_conntrack_ipv4
 
 #修改ipvs配置，加入以下内容
 vi /etc/modules-load.d/ipvs.conf
@@ -743,6 +750,26 @@ cat > /etc/docker/daemon.json <<EOF
 }
 EOF
 systemctl daemon-reload && systemctl enable --now docker
+```
+
+```sh
+vim /etc/docker/daemon.json  
+
+{
+ "registry-mirrors": [
+    "https://82m9ar63.mirror.aliyuncs.com"
+  ],
+ "exec-opts": ["native.cgroupdriver=systemd"],
+ "max-concurrent-downloads": 10,
+ "max-concurrent-uploads": 5,
+ "log-opts": {
+   "max-size": "300m",
+   "max-file": "2"
+ },
+ "live-restore": true
+}
+
+systemctl daemon-reload && systemctl restart docker
 ```
 
 
@@ -1009,7 +1036,20 @@ https://etcd.io/docs/next/op-guide/hardware/#small-cluster  安装参考
 cfssl gencert -initca etcd-ca-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/ca -
 ```
 
-
+>```ABAP
+>[root@k8s-master1 pki]# tree
+>.
+>├── ca-config.json
+>├── ca.csr
+>├── ca-csr.json
+>├── ca-key.pem
+>├── ca.pem
+>├── etcd
+>│   ├── ca.csr
+>│   ├── ca-key.pem
+>│   └── ca.pem
+>└── etcd-ca-csr.json
+>```
 
 
 
@@ -1063,6 +1103,38 @@ cfssl gencert \
 
 
 
+```shell
+cfssl gencert \
+   -ca=/etc/kubernetes/pki/etcd/ca.pem \
+   -ca-key=/etc/kubernetes/pki/etcd/ca-key.pem \
+   -config=/etc/kubernetes/pki/ca-config.json \
+   -profile=etcd \
+   etcd-kaiyu-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/etcd
+```
+
+>```ABAP
+>[root@k8s-master1 pki]# tree
+>.
+>├── ca-config.json
+>├── ca.csr
+>├── ca-csr.json
+>├── ca-key.pem
+>├── ca.pem
+>├── etcd
+>│   ├── ca.csr
+>│   ├── ca-key.pem
+>│   ├── ca.pem
+>│   ├── etcd.csr
+>│   ├── etcd-key.pem
+>│   └── etcd.pem
+>├── etcd-ca-csr.json
+>└── etcd-kaiyu-csr.json
+>```
+>
+>
+
+
+
 > 把生成的etcd证书，复制给其他机器
 >
 > for i in k8s-master2 k8s-master3;do scp -r /etc/kubernetes/pki/etcd root@$i:/etc/kubernetes/pki;done
@@ -1102,10 +1174,20 @@ cfssl gencert \
 注：kube-apiserver使用上面的证书时，hosts为空，也可以指定hosts单独为apiserver生成证书
 
 
-etcdctl --endpoints=https://192.168.0.42:2379 --cacert=/etc/kubernetes/pki/etcd/ca.pem --cert=/etc/kubernetes/pki/etcd/healthcheck-client.pem --key=/etc/kubernetes/pki/etcd/healthcheck-client-key.pem member list --write-out=table
 ```
 
-
+>```ABAP
+> etcd
+>│   ├── ca.csr
+>│   ├── ca-key.pem
+>│   ├── ca.pem
+>│   ├── etcd.csr
+>│   ├── etcd-key.pem
+>│   ├── etcd.pem
+>│   ├── healthcheck-client.csr
+>│   ├── healthcheck-client-key.pem
+>│   └── healthcheck-client.pem
+>```
 
 
 
@@ -1319,9 +1401,8 @@ Alias=etcd3.service
 
 ```sh
 # 加载&开机启动
-systemctl daemon-reload
-systemctl enable --now etcd
-
+systemctl daemon-reload  && systemctl enable --now etcd
+systemctl status etcd
 # 启动有问题,使用journalctl -u 服务名排查
 journalctl -u etcd
 ```

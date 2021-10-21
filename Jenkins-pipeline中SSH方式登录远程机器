@@ -1,0 +1,58 @@
+pipeline{
+   agent any
+
+   stages {
+       stage ('Pipeline configuration') {
+                agent none
+
+                steps {
+                      script {
+
+                           stage ('Pull & PushImage') {
+
+
+                          withCredentials([usernamePassword(credentialsId: '4a3297c5-c6db-42af-950b-558105294dfe', passwordVariable: 'harbor_pwd', usernameVariable: 'harbor_user')]) {
+
+
+
+                                def remote = [:]
+
+                                remote.name = 'test'
+
+                                remote.host ='192.168.0.29'
+
+                                remote.user = "${harbor_user}"
+
+                                remote.password ="${harbor_pwd}"
+
+                                remote.allowAnyHosts= true
+
+                                writeFile file:'jemeter.sh', text: 'cd /root \n ls'
+
+                                sshPut remote: remote, from: 'jemeter.sh', into: '.'
+
+                                sshScript remote: remote,script: "jemeter.sh"
+                            }
+
+                        }
+
+                       }
+
+                  }   
+
+           }
+
+      }
+
+}
+
+https://github.com/jenkinsci/ssh-steps-plugin#examples
+
+ stage("SSH Steps Rocks!") {
+            writeFile file: 'abc.sh', text: 'ls'
+            sshCommand remote: remote, command: 'for i in {1..5}; do echo -n \"Loop \$i \"; date ; sleep 1; done'
+            sshPut remote: remote, from: 'abc.sh', into: '.'
+            sshGet remote: remote, from: 'abc.sh', into: 'bac.sh', override: true
+            sshScript remote: remote, script: 'abc.sh'
+            sshRemove remote: remote, path: 'abc.sh'
+}
