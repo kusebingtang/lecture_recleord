@@ -39,7 +39,6 @@ spec:
           resources:
             limits:
               memory: 1Gi
-               cpu: '2'
           volumeMounts:
             - name: host-time
               readOnly: true
@@ -62,3 +61,44 @@ spec:
       maxSurge: 25%
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 600
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: xxl-job-admin-svc
+  namespace: rtb-service
+  labels:
+    app: xxl-job-admin-svc
+  annotations:
+    kubesphere.io/creator: pm-jiangbin
+spec:
+  ports:
+    - name: http-8080
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: xxl-job-admin
+  type: ClusterIP
+  sessionAffinity: None
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: xxl-job-admin-node
+  namespace: rtb-service
+  labels:
+    app: xxl-job-admin-node
+  annotations:
+    kubesphere.io/creator: pm-jiangbin
+spec:
+  ports:
+    - name: http-8080
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+      nodePort: 30335
+  selector:
+    app: xxl-job-admin
+  sessionAffinity: None
+  type: NodePort
