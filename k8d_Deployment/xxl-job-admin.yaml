@@ -1,0 +1,64 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: xxl-job-admin
+  namespace: rtb-service
+  labels:
+    app: xxl-job-admin
+  annotations:
+    kubesphere.io/creator: pm-jiangbin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xxl-job-admin
+  template:
+    metadata:
+      labels:
+        app: xxl-job-admin
+    spec:
+      volumes:
+        - name: host-time
+          hostPath:
+            path: /etc/localtime
+            type: ''
+      containers:
+        - name: xxl-job-admin
+          image: 'xuxueli/xxl-job-admin:2.1.0'
+          ports:
+            - name: http-8080
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PARAMS
+              value: >-
+                --spring.datasource.url=jdbc:mysql://115.236.35.109:13306/xxl_job?Unicode=true&characterEncoding=UTF-8&useSSL=false
+                --spring.datasource.username=root
+                --spring.datasource.password=qqqqwwqq
+                --xxl.admin.login=false
+          resources:
+            limits:
+              memory: 1Gi
+               cpu: '2'
+          volumeMounts:
+            - name: host-time
+              readOnly: true
+              mountPath: /etc/localtime
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: default
+      serviceAccount: default
+      securityContext: {}
+      affinity: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
