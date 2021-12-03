@@ -60,7 +60,7 @@ kernel-ml： mainline stable： 主线稳定版
 yum --enablerepo=elrepo-kernel install -y kernel-lt
 
 # 5、查看内核
-                                                                      uname -sr
+   uname -sr
 #查看内核位置
 awk -F\' '$1=="menuentry " {print $2}' /etc/grub2.cfg
 CentOS Linux 7 Rescue 0a87210b6f6337e79a6611c512e524ce (5.4.119-1.el7.elrepo.x86_64) #第0个
